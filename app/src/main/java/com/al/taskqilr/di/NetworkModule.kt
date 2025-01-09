@@ -14,7 +14,7 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://192.168.137.1:8080") // Replace with your backend URL
+            .baseUrl("https://precious-sure-lioness.ngrok-free.app") // Replace with your backend URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

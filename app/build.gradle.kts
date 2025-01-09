@@ -69,4 +69,6 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.52")
     ksp("com.google.dagger:dagger-compiler:2.52")
     ksp("com.google.dagger:hilt-android-compiler:2.52")
+
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
