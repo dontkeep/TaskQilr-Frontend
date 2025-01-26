@@ -1,20 +1,29 @@
 package com.al.taskqilr.presentation.auth
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,12 +43,19 @@ import com.al.taskqilr.domain.state.AuthState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import com.al.taskqilr.R
 import com.al.taskqilr.services.FirebaseAuthentication
 import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun LoginScreen(
@@ -49,26 +65,20 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (isLoading) {
             CircularProgressIndicator()
         } else {
-            Button(
-                onClick = {
+            SlideToUnlock(
+                isLoading = isLoading,
+                onUnlockRequested = {
                     isLoading = true
-                    try {
-                        onSignInClick()
-                    } catch (e: Exception) {
-                        isLoading = false
-                        errorMessage = e.message
-                    }
+                    onSignInClick()
                 }
-            ) {
-                Text("Sign in with Google")
-            }
+            )
         }
 
         errorMessage?.let {

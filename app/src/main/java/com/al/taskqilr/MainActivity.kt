@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     lifecycleScope.launch {
                         val user = authClient.handleSignInResult(result.data)
                         if (user == null) {
-                            Log.d("MainActivity", "User is null")
+                            !isLoading
                         } else {
                             Log.d("MainActivity", "User is not null")
                         }
