@@ -4,67 +4,73 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.al.taskqilr.presentation.auth.LoginViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.al.taskqilr.presentation.auth.AuthViewModel
 import com.al.taskqilr.presentation.navigation.AppNavigation
 import com.al.taskqilr.presentation.theme.TaskQilrTheme
+import com.al.taskqilr.services.FirebaseAuthentication
 import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.migration.CustomInjection.inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    private val loginViewModel: LoginViewModel by viewModels()
-    private lateinit var oneTapClient: SignInClient
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             TaskQilrTheme {
-                AppNavigation() // Launch the navigation graph
-            }
-        }
-    }
+                val authViewModel = hiltViewModel<AuthViewModel>()
+                val authClient = remember { FirebaseAuthentication(FirebaseAuth.getInstance()) }
+                val currentUserState = authViewModel.currentUser.collectAsStateWithLifecycle()
+                val isLoadingState = authViewModel.isLoading.collectAsStateWithLifecycle()
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        Log.d("Running", "onNewIntent: called")
-        intent.data?.let { uri ->
-            Log.d("Uri Main", "Uri: $uri")
-            if (uri.toString().startsWith("https://precious-sure-lioness.ngrok-free.app/callback")) {
-                val token = uri.getQueryParameter("token")
-                Log.d("Token Main", "Received token: $token")
-                if (token != null) {
-                    Log.d("Token", "Received token: $token")
-                    loginViewModel.saveToken(token)
+                val currentUser = currentUserState.value
+                val isLoading = isLoadingState.value
+
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    lifecycleScope.launch {
+                        val user = authClient.handleSignInResult(result.data)
+                        if (user == null) {
+                            Log.d("MainActivity", "User is null")
+                        } else {
+                            Log.d("MainActivity", "User is not null")
+                        }
+                    }
                 }
+
+                AppNavigation(
+                    onGoogleSignIn = {
+                        authViewModel.signIn(authClient, this, launcher)
+                    },
+                    onLogout = { authViewModel.signOut(this) },
+                    isUserLoggedIn = !isLoading && currentUser != null
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    TaskQilrTheme {
-        Greeting("Android")
     }
 }
