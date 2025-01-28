@@ -1,5 +1,8 @@
 package com.al.taskqilr.di
 
+import com.al.taskqilr.data.network.AppApiConfig
+import com.al.taskqilr.data.network.AppApiServices
+import com.al.taskqilr.data.repository.DataRepository
 import com.al.taskqilr.domain.manager.TokenStorage
 import dagger.Module
 import dagger.Provides
@@ -25,12 +28,20 @@ object NetworkModule {
     }
 
     @Provides
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(json.asConverterFactory("application/json; charset=UTF8".toMediaType()))
-            .build()
+    @Singleton
+    fun provideRetrofit(): Retrofit {
+        return AppApiConfig().retrofit
     }
 
+    @Provides
+    @Singleton
+    fun provideApiService(retrofit: Retrofit): AppApiServices {
+        return retrofit.create(AppApiServices::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataRepository(apiService: AppApiServices): DataRepository {
+        return DataRepository(apiService)
+    }
 }

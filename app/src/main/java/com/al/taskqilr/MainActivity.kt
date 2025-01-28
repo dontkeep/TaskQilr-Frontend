@@ -24,7 +24,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.al.taskqilr.data.repository.DataRepository
 import com.al.taskqilr.presentation.auth.AuthViewModel
+import com.al.taskqilr.presentation.home.HomeViewModel
 import com.al.taskqilr.presentation.navigation.AppNavigation
 import com.al.taskqilr.presentation.theme.TaskQilrTheme
 import com.al.taskqilr.services.FirebaseAuthentication
@@ -35,18 +37,21 @@ import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.migration.CustomInjection.inject
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity: ComponentActivity() {
+    @Inject
+    lateinit var dataRepository: DataRepository
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             TaskQilrTheme {
+                val homeViewModel = hiltViewModel<HomeViewModel>()
                 val authViewModel = hiltViewModel<AuthViewModel>()
-                val authClient = remember { FirebaseAuthentication(FirebaseAuth.getInstance()) }
+                val authClient = remember { FirebaseAuthentication(FirebaseAuth.getInstance(), dataRepository, authViewModel) }
                 val currentUserState = authViewModel.currentUser.collectAsStateWithLifecycle()
                 val isLoadingState = authViewModel.isLoading.collectAsStateWithLifecycle()
-
                 val currentUser = currentUserState.value
                 val isLoading = isLoadingState.value
 
@@ -67,7 +72,11 @@ class MainActivity : ComponentActivity() {
                     onGoogleSignIn = {
                         authViewModel.signIn(authClient, this, launcher)
                     },
-                    onLogout = { authViewModel.signOut(this) },
+                    onLogout = {
+                        val token = authViewModel.jwtToken.value
+                        Log.d("MainActivity", "Token: $token")
+                        authViewModel.signOut(this, token.toString())
+                               },
                     isUserLoggedIn = !isLoading && currentUser != null
                 )
             }

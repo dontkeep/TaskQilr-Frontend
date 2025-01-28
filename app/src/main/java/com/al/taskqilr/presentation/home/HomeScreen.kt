@@ -23,7 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.al.taskqilr.presentation.auth.AuthViewModel
 
 @Composable
-fun HomeScreen(onLogout: () -> Unit) {
+fun HomeScreen(
+    onLogout: () -> Unit) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
