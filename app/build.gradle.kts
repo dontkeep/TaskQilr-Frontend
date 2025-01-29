@@ -95,4 +95,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx:23.1.0")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     implementation("androidx.compose.material:material:1.7.6")
+
+    implementation("com.kizitonwose.calendar:compose:2.6.2")
 }
